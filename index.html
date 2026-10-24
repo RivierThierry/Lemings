@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#14163a">
+  <meta name="description" content="Les Bestioles : guide une colonie de petites bestioles jusqu'à la sortie en leur donnant les bons talents. 60 niveaux de casse-têtes !">
+  <title>Les Bestioles</title>
+  <link rel="icon" href="vignette.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="arcade.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="stage">
+      <canvas id="view"></canvas>
+      <div id="hud" class="hidden">
+        <div class="pill" id="stats">
+          <span title="Bestioles sorties"><b id="s-out">0</b><small>/<span id="s-total">0</span> dehors</small></span>
+          <span title="Bestioles sauvées"><b id="s-saved">0</b><small>/<span id="s-need">0</span> sauvées</small></span>
+          <span title="Temps restant" id="s-time-wrap"><b id="s-time">0:00</b></span>
+        </div>
+        <div class="pill hover-info" id="hover-info"></div>
+        <button class="round" id="btn-menu" title="Menu (Échap)" aria-label="Menu">☰</button>
+      </div>
+      <div id="paused-tag" class="hidden">PAUSE</div>
+      <div id="demo-tag" class="hidden">Démonstration — ☰ pour quitter</div>
+    </div>
+
+    <div id="panel" class="hidden">
+      <div class="row skills" id="skills"></div>
+      <div class="row controls">
+        <div class="rr">
+          <button class="ctl" id="rr-down" aria-label="Moins vite">−</button>
+          <div class="rr-val"><small>débit</small><b id="rr-val">50</b></div>
+          <button class="ctl" id="rr-up" aria-label="Plus vite">+</button>
+        </div>
+        <button class="ctl" id="btn-pause" title="Pause (P ou Espace)">⏸</button>
+        <button class="ctl" id="btn-fast" title="Accélérer (F)">⏩</button>
+        <button class="ctl danger" id="btn-nuke" title="Tout faire exploser (N deux fois)">💥</button>
+        <canvas id="minimap"></canvas>
+      </div>
+    </div>
+
+    <div id="screens"></div>
+    <div id="toast" class="hidden"></div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
