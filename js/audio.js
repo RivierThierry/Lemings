@@ -140,11 +140,13 @@ function parseTune(tu) {
   return { notes, len: bars * 4, roots, bpm: tu.bpm };
 }
 
-let current = null, timer = null;
+let current = null, timer = null, currentIndex = -1;
+export const playingTune = () => (current ? currentIndex : -1);
 
 export function playMusic(index) {
   if (!ac) return;
   stopMusic();
+  currentIndex = index;
   const tune = parseTune(TUNES[((index % TUNES.length) + TUNES.length) % TUNES.length]);
   const spb = 60 / tune.bpm;
   const start = ac.currentTime + 0.1;

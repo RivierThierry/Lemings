@@ -453,11 +453,17 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('keyup', (e) => S.keys.delete(e.code));
 window.addEventListener('resize', () => resize());
+if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(canvas);
 window.addEventListener('blur', () => { S.keys.clear(); });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && S.mode === 'play' && !S.demo) setPaused(true);
 });
-document.addEventListener('pointerdown', () => audio.unlock(), { once: false, passive: true });
+const MENU_MODES = new Set(['title', 'select', 'help', 'board', 'options']);
+function menuMusic() {
+  if (MENU_MODES.has(S.mode) && audio.playingTune() !== 2) audio.playMusic(2);
+}
+document.addEventListener('pointerdown', () => { audio.unlock(); menuMusic(); }, { passive: true });
+document.addEventListener('keydown', () => menuMusic());
 
 // ---------- boucle ----------
 let last = performance.now();
@@ -621,7 +627,7 @@ function titleScreen() {
   $('paused-tag').classList.add('hidden');
   if (!S.game || S.demoKind !== 'attract') startAttract();
   S.paused = false;
-  audio.stopMusic();
+  menuMusic();
   const acc = h('div', { class: 'account' });
   const logo = h('h1', { class: 'logo' }, ...'Les'.split('').map((c, i) => h('span', { style: `animation-delay:${i * 0.12}s` }, c)), ' ',
     ...'Bestioles'.split('').map((c, i) => h('span', { class: i % 2 ? '' : 'accent', style: `animation-delay:${0.4 + i * 0.12}s` }, c)));
@@ -651,6 +657,11 @@ async function fillAccount(el) {
 
 function selectScreen(ti) {
   S.mode = 'select';
+  $('hud').classList.add('hidden');
+  $('panel').classList.add('hidden');
+  $('demo-tag').classList.add('hidden');
+  $('paused-tag').classList.add('hidden');
+  menuMusic();
   if (ti === undefined) {
     // dernier palier débloqué avec des niveaux à faire
     ti = 0;
@@ -684,6 +695,7 @@ function selectScreen(ti) {
 
 function briefScreen(def) {
   S.mode = 'brief';
+  audio.stopMusic();
   if (!S.game || S.level !== def || S.demoKind) { startLevel(def, 'attract'); S.paused = true; }
   S.paused = true;
   $('hud').classList.add('hidden');
