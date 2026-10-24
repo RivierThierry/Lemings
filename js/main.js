@@ -596,8 +596,8 @@ function levelOver() {
     S.save.fails[def.id] = (S.save.fails[def.id] || 0) + 1;
   }
   r.record = r.win && (!prev || r.score > prev.score);
-  r.total = totalScore();
-  r.gain = r.total - totalBefore;
+  r.grand = totalScore();
+  r.gain = r.grand - totalBefore;
   persist();
   audio.stopMusic();
   audio.sfx(r.win ? 'win' : 'lose');
@@ -786,7 +786,7 @@ function resultScreen(def, r) {
       h('button', { class: 'btn' + (r.win ? '' : ' go'), onclick: () => { audio.sfx('click'); briefScreen(def); } }, '↻ Rejouer'),
       r.win && next && levelUnlocked(next) ? h('button', { class: 'btn go', onclick: () => { audio.sfx('click'); briefScreen(next); } }, 'Suivant ▶') : null));
   show(card);
-  if (r.win && r.gain > 0) scoreFlow(scoreBox, r.total);
+  if (r.win && r.gain > 0) scoreFlow(scoreBox, r.grand);
 }
 
 // Envoie le score total au classement (avec un pseudo)
