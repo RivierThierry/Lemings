@@ -33,6 +33,7 @@ mais l'esprit et la progression doivent être fidèles.
     ~28 px de large et ~32 px de haut centrée 5 px au-dessus de ses pieds (jusqu'à ~11 px sous ses pieds). Elle meurt.
     Ne creuse pas l'acier. Libère un bloqueur si on la lui donne.
   - `blocker` bloqueuse : reste plantée ; les autres font demi-tour à ±6 px d'elle. Seule une bombe (ou la disparition du sol) l'en libère.
+    Quand il ne reste plus que des bloqueuses (et que tout le monde est sorti), le niveau se termine tout seul.
   - `builder` bâtisseuse : 12 briques ; chaque brique fait 12 px de long et 2 px de haut, et elle monte de 2 px et avance de 4 px
     par brique → l'escalier complet monte de 24 px sur ~48 px (+ la longueur d'une brique). Elle s'arrête et fait demi-tour
     si elle cogne un mur ou un plafond. On peut redonner `builder` pendant les 3 dernières briques ou le haussement d'épaules
@@ -66,7 +67,7 @@ mais l'esprit et la progression doivent être fidèles.
     { t: 'circle', x: 300, y: 200, r: 20, cut: true },                // trou
     { t: 'rect', x: 600, y: 150, w: 40, h: 90, m: 'left' },           // sens unique : ne se creuse horizontalement que vers la gauche
   ],
-  hazards: [{ t: 'water', x: 600, y: 290, w: 200, h: 30 }],          // 'water' | 'lava' ; y = surface ; mortel
+  hazards: [{ t: 'water', x: 600, y: 290, w: 200, h: 30 }],          // 'water' | 'lava' ; y = surface ; mortel jusqu'à 6 px sous le rectangle
   traps: [{ t: 'crusher', x: 950, y: 239 }, { t: 'fire', x: 1000, y: 220, w: 30, h: 20 }],
        // crusher : tue une bestiole qui passe à ±5 px de x (pieds entre y-14 et y+1), puis se recharge 50 ticks
        // fire : flammes permanentes, mortelles dans le rectangle

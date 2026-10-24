@@ -404,7 +404,7 @@ export class Game {
     if (this.timeLeft <= 0) {
       this.timeLeft = 0;
       this.finish('time');
-    } else if ((this.out >= this.total || this.nuking) && this.alive === 0 && this.opening === 0) {
+    } else if ((this.out >= this.total || this.nuking) && this.opening === 0 && this.lems.every((l) => l.state === 'dead' || l.state === 'saved' || (l.state === 'blocking' && l.bomb < 0))) {
       this.finish('end');
     }
   }
@@ -444,7 +444,7 @@ export class Game {
       }
     }
     for (const h of this.hazards) {
-      if (l.x >= h.x && l.x < h.x + h.w && l.y >= h.y + 3 && l.y < h.y + h.h + 30) {
+      if (l.x >= h.x && l.x < h.x + h.w && l.y >= h.y + 3 && l.y < h.y + h.h + 6) {
         this.kill(l, h.t === 'lava' ? 'burning' : 'drowning');
         return true;
       }
@@ -640,7 +640,9 @@ export class Game {
       this.setState(l, 'walking');
       return;
     }
-    const n = T.erase(l.x + d * 6, l.y - 8, 7, 9.5, clipFwd(1, 13));
+    let n = T.erase(l.x + d * 6, l.y - 8, 7, 9.5, clipFwd(1, 13));
+    const near = clipFwd(1, 4);
+    n += T.eraseRect(near.x0, l.y - 12, near.x1, l.y);
     if (n) this.emit('dig', { x: l.x + d * 6, y: l.y - 6, dir: d });
     if (this.blocked(l, l.x + d)) { l.dir = -d; this.setState(l, 'walking'); return; }
     if (!T.solid(l.x + d, l.y)) l.x += d;

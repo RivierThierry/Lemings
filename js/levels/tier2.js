@@ -310,7 +310,6 @@ export const TIER2 = [
       { lem: 1, skill: 'digger', x: 320, dir: -1 },
       { lem: 1, skill: 'blocker', x: 220, y: 240 },
       { lem: 2, skill: 'basher', x: 512, dir: 1, y: 240 },
-      { nuke: true, at: 3300 },
     ],
   },
   {
@@ -336,7 +335,6 @@ export const TIER2 = [
       { lem: 2, skill: 'blocker', x: 1610 },
       { lem: 0, skill: 'builder', x: 556 },
       { lem: 5, skill: 'basher', x: 1190, dir: -1 },
-      { nuke: true, at: 3150 },
     ],
   },
   {

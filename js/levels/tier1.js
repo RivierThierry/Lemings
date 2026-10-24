@@ -66,7 +66,6 @@ export const TIER1 = [
     solution: [
       { lem: 0, skill: 'builder', x: 300, dir: 1 },
       { lem: 0, skill: 'builder', x: 596, dir: 1, after: 0 },
-      { nuke: true, at: 2400 },
     ],
   },
   {
@@ -120,7 +119,7 @@ export const TIER1 = [
     ],
     deco: [{ t: 'tree', x: 40, y: 215 }, { t: 'flower', x: 200, y: 217 }, { t: 'bush', x: 330, y: 215 },
       { t: 'sign', x: 600, y: 215 }, { t: 'tree', x: 900, y: 215 }, { t: 'flower', x: 960, y: 217 }],
-    solution: [{ lem: 0, skill: 'blocker', x: 520, dir: 1 }, { nuke: true, at: 1500 }],
+    solution: [{ lem: 0, skill: 'blocker', x: 520, dir: 1 }],
   },
   {
     id: 't1-08', name: 'Ça va faire boum', theme: 'bonbon',
@@ -182,7 +181,6 @@ export const TIER1 = [
     solution: [
       ...Array.from({ length: 16 }, (_, i) => ({ lem: i, skill: 'floater', at: 0 })),
       { lem: 0, skill: 'blocker', x: 500, dir: 1 },
-      { nuke: true, at: 1500 },
     ],
   },
   {
