@@ -14,7 +14,8 @@ export const TIER1 = [
       { t: 'rect', x: 940, y: 100, w: 20, h: 220, m: 'steel' },
       { t: 'rect', x: 780, y: 140, w: 20, h: 140, m: 'steel' },
     ],
-    deco: [{ t: 'tree', x: 300, y: 176 }, { t: 'flower', x: 480, y: 172 }],
+    deco: [{ t: 'tree', x: 300, y: 174 }, { t: 'flower', x: 480, y: 172 }, { t: 'bush', x: 120, y: 172 },
+      { t: 'flower', x: 660, y: 177 }, { t: 'mushroom', x: 420, y: 259 }, { t: 'mushroom', x: 720, y: 261 }],
     solution: [{ lem: 0, skill: 'digger', x: 400 }],
   },
   {
@@ -53,7 +54,7 @@ export const TIER1 = [
     id: 't1-04', name: 'Brique après brique', theme: 'prairie',
     w: 1000, h: 320, lemmings: 20, save: 12, release: 50, time: 240,
     skills: { builder: 8 },
-    hint: "Une marche trop haute ? Un trou ? La Bâtisseuse pose un escalier. Commence un peu avant l'obstacle !",
+    hint: "Une marche trop haute ? Un trou ? La Bâtisseuse pose un escalier : commence un peu avant l'obstacle !",
     entrances: [{ x: 110, y: 140 }], exits: [{ x: 880, y: 202 }],
     terrain: [
       { t: 'land', pts: [[0, 222], [160, 218], [338, 222], [340, 206], [480, 203], [604, 206]] },
@@ -269,10 +270,10 @@ export const TIER1 = [
     ],
   },
   {
-    id: 't1-15', name: 'Le grand final', theme: 'glace',
+    id: 't1-15', name: 'Le pont des pingouins', theme: 'glace',
     w: 1300, h: 320, lemmings: 30, save: 22, release: 60, time: 300,
     skills: { blocker: 3, builder: 8, bomber: 3 },
-    hint: "Retiens la troupe pendant que le pont avance... puis libère la Bloqueuse, à ta façon !",
+    hint: "Retiens la troupe pendant que le pont avance. Une Bloqueuse ne bouge plus... sauf si elle fait boum !",
     entrances: [{ x: 150, y: 140 }], exits: [{ x: 1150, y: 167 }],
     terrain: [
       { t: 'land', pts: [[0, 222], [200, 218], [400, 224], [560, 220], [604, 222], [612, 250], [620, 320]] },

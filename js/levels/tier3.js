@@ -134,4 +134,27 @@ export const TIER3 = [
       { lem: 3, skill: 'basher', state: 'walking', after: 3 },
     ],
   },
+  {
+    id: 't3-06', name: 'La cheminée de cristal', theme: 'cristal',
+    w: 1000, h: 340, lemmings: 40, save: 36, release: 50, time: 300,
+    skills: { blocker: 1, basher: 1, builder: 4 },
+    hint: 'Pour monter dans un puits étroit, il faut savoir faire demi-tour.',
+    entrances: [{ x: 300, y: 240 }],
+    exits: [{ x: 330, y: 0 }],
+    terrain: [
+      { t: 'rect', x: 0, y: 300, w: 1000, h: 40 },
+      { t: 'rect', x: 0, y: 204, w: 640, h: 16 },
+      { t: 'rect', x: 600, y: 204, w: 40, h: 100 },
+      { t: 'rect', x: 700, y: 120, w: 300, h: 220 },
+    ],
+    traps: [{ t: 'crusher', x: 140, y: 299 }],
+    solution: [
+      { lem: 0, skill: 'basher', x: 590 },
+      { lem: 1, skill: 'blocker', x: 220, dir: -1 },
+      { lem: 0, skill: 'builder', x: 648, dir: 1, after: 0 },
+      { lem: 0, skill: 'builder', dir: -1, after: 2 },
+      { lem: 0, skill: 'builder', dir: 1, after: 3 },
+      { lem: 0, skill: 'builder', dir: -1, after: 4 },
+    ],
+  },
 ];
