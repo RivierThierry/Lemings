@@ -270,14 +270,13 @@ export const TIER1 = [
   },
   {
     id: 't1-15', name: 'Le grand final', theme: 'glace',
-    w: 1300, h: 320, lemmings: 30, save: 20, release: 60, time: 300,
+    w: 1300, h: 320, lemmings: 30, save: 22, release: 60, time: 300,
     skills: { blocker: 3, builder: 8, bomber: 3 },
     hint: "Retiens la troupe pendant que le pont avance... puis libère la Bloqueuse, à ta façon !",
     entrances: [{ x: 150, y: 140 }], exits: [{ x: 1150, y: 167 }],
     terrain: [
       { t: 'land', pts: [[0, 222], [200, 218], [400, 224], [560, 220], [604, 222], [612, 250], [620, 320]] },
       { t: 'land', pts: [[764, 320], [766, 230], [770, 186], [782, 172], [830, 168], [1000, 170], [1300, 166]] },
-      { t: 'rock', x: 880, y: 110, w: 60, h: 64, seed: 31 },
       { t: 'rect', x: 600, y: 300, w: 200, h: 20 },
     ],
     hazards: [{ t: 'water', x: 610, y: 262, w: 160, h: 40 }],

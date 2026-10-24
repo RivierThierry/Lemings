@@ -200,4 +200,23 @@ export const TIER2 = [
       { lem: 3, skill: 'basher', x: 890, dir: 1, after: 2 },
     ],
   },
+  {
+    id: 't2-09', name: 'La cheminée du yéti', theme: 'glace',
+    w: 900, h: 340, lemmings: 30, save: 22, release: 50, time: 300,
+    skills: { builder: 7, basher: 2 },
+    hint: 'Un escalier qui rebondit d’un mur à l’autre… puis une porte de neige à la bonne hauteur.',
+    entrances: [{ x: 326, y: 215 }], exits: [{ x: 760, y: 211 }],
+    terrain: [
+      { t: 'rect', x: 0, y: 300, w: 900, h: 40, m: 'steel' },
+      { t: 'rect', x: 268, y: 100, w: 32, h: 200, m: 'steel' },
+      { t: 'rect', x: 352, y: 100, w: 32, h: 200, m: 'steel' },
+      { t: 'rect', x: 268, y: 92, w: 116, h: 24, m: 'steel' },
+      { t: 'rect', x: 352, y: 176, w: 32, h: 36, m: 'dirt' },
+      { t: 'land', pts: [[384, 212], [500, 210], [650, 213], [800, 211], [900, 212]], to: 300 },
+    ],
+    deco: [],
+    solution: [
+      { lem: 0, skill: 'builder', x: 302, dir: 1 },
+    ],
+  },
 ];
