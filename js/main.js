@@ -255,7 +255,10 @@ $('btn-nuke').addEventListener('click', pressNuke);
 $('btn-menu').addEventListener('click', () => openPauseMenu());
 $('btn-full').addEventListener('click', () => { audio.sfx('click'); toggleFullscreen(); });
 if (!canFullscreen()) $('btn-full').classList.add('hidden');
-const syncFullBtn = () => { $('btn-full').textContent = fsElement() ? '🗗' : '⛶'; resize(); };
+const ICON_FULL = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_EXIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const syncFullBtn = () => { $('btn-full').innerHTML = fsElement() ? ICON_EXIT : ICON_FULL; resize(); };
+syncFullBtn();
 document.addEventListener('fullscreenchange', syncFullBtn);
 document.addEventListener('webkitfullscreenchange', syncFullBtn);
 
@@ -733,16 +736,17 @@ function briefScreen(def) {
 }
 
 // ---------- plein écran et geste « retour » ----------
-function isPhone() { return matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 700; }
 function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
-function enterFullscreen() {
-  if (!S.save.opts.full || fsElement()) return;
+let autoFullDone = false;
+function enterFullscreen(manual) {
+  if (fsElement() || (!manual && (!S.save.opts.full || autoFullDone))) return;
+  autoFullDone = true;
   const el = document.documentElement;
   const req = el.requestFullscreen || el.webkitRequestFullscreen;
   if (!req) return;
   try {
     const p = req.call(el, { navigationUI: 'hide' });
-    if (p && p.then) p.then(() => { if (isPhone() && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }).catch(() => {});
+    if (p && p.catch) p.catch(() => {});
   } catch (e) { /* refusé par le navigateur */ }
 }
 function exitFullscreen() {
@@ -752,7 +756,7 @@ function exitFullscreen() {
 }
 function toggleFullscreen() {
   if (fsElement()) { S.save.opts.full = false; exitFullscreen(); }
-  else { S.save.opts.full = true; enterFullscreen(); }
+  else { S.save.opts.full = true; enterFullscreen(true); }
   persist();
 }
 function canFullscreen() { return !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen); }
@@ -932,7 +936,7 @@ function optionToggles() {
   const rows = [row('🎵 Musique', 'music'), row('🔊 Bruitages', 'sfx')];
   if (canFullscreen()) {
     const fs = row('⛶ Plein écran en jeu', 'full');
-    fs.querySelector('button').addEventListener('click', () => { if (S.save.opts.full) { if (S.mode === 'pause') enterFullscreen(); } else exitFullscreen(); });
+    fs.querySelector('button').addEventListener('click', () => { if (S.save.opts.full) { if (S.mode === 'pause') enterFullscreen(true); } else exitFullscreen(); });
     rows.push(fs);
   }
   return h('div', { style: 'margin-top:14px;text-align:left' }, ...rows);
