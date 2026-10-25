@@ -31,7 +31,7 @@ const screens = $('screens');
 
 const S = {
   mode: 'boot',          // title | select | brief | play | result
-  save: { v: 1, best: {}, fails: {}, opts: { music: true, sfx: true }, sent: 0 },
+  save: { v: 1, best: {}, fails: {}, opts: { music: true, sfx: true, full: true }, sent: 0 },
   game: null, view: null, back: null, parts: new Particles(), level: null,
   cam: { x: 0, y: 0, zoom: 2, w: 100, h: 100 },
   skill: null, paused: false, fast: false, demo: null, demoKind: null,
@@ -54,6 +54,7 @@ function h(tag, props, ...kids) {
   return el;
 }
 function show(node, dim = true, id) {
+  $('toast').classList.add('hidden');
   const wrap = h('div', { class: 'screen' + (dim ? ' dim' : ''), id }, node);
   screens.replaceChildren(wrap);
   return wrap;
@@ -252,6 +253,11 @@ $('btn-pause').addEventListener('click', () => { if (S.mode === 'play') setPause
 $('btn-fast').addEventListener('click', () => { S.fast = !S.fast; updatePanel(); });
 $('btn-nuke').addEventListener('click', pressNuke);
 $('btn-menu').addEventListener('click', () => openPauseMenu());
+$('btn-full').addEventListener('click', () => { audio.sfx('click'); toggleFullscreen(); });
+if (!canFullscreen()) $('btn-full').classList.add('hidden');
+const syncFullBtn = () => { $('btn-full').textContent = fsElement() ? '🗗' : '⛶'; resize(); };
+document.addEventListener('fullscreenchange', syncFullBtn);
+document.addEventListener('webkitfullscreenchange', syncFullBtn);
 
 // ---------- HUD ----------
 function updateHud(force) {
@@ -657,6 +663,7 @@ async function fillAccount(el) {
 
 function selectScreen(ti) {
   S.mode = 'select';
+  guardHistory();
   $('hud').classList.add('hidden');
   $('panel').classList.add('hidden');
   $('demo-tag').classList.add('hidden');
@@ -725,7 +732,52 @@ function briefScreen(def) {
       h('button', { class: 'btn go', onclick: () => { audio.unlock(); audio.sfx('open'); play(def); } }, 'C\'est parti !'))));
 }
 
+// ---------- plein écran et geste « retour » ----------
+function isPhone() { return matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 700; }
+function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
+function enterFullscreen() {
+  if (!S.save.opts.full || fsElement()) return;
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!req) return;
+  try {
+    const p = req.call(el, { navigationUI: 'hide' });
+    if (p && p.then) p.then(() => { if (isPhone() && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); }).catch(() => {});
+  } catch (e) { /* refusé par le navigateur */ }
+}
+function exitFullscreen() {
+  if (!fsElement()) return;
+  const ex = document.exitFullscreen || document.webkitExitFullscreen;
+  try { const p = ex.call(document); if (p && p.catch) p.catch(() => {}); } catch (e) { /* rien */ }
+}
+function toggleFullscreen() {
+  if (fsElement()) { S.save.opts.full = false; exitFullscreen(); }
+  else { S.save.opts.full = true; enterFullscreen(); }
+  persist();
+}
+function canFullscreen() { return !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen); }
+
+// Un glissé depuis le bord de l'écran fait « retour » dans le navigateur : pendant une partie,
+// on garde une étape d'historique en réserve et on ouvre le menu pause au lieu de quitter le jeu.
+function guardHistory() {
+  if (!history.state || !history.state.bestioles) history.pushState({ bestioles: 1 }, '');
+}
+window.addEventListener('popstate', () => {
+  if (S.mode === 'play' || S.mode === 'pause') {
+    history.pushState({ bestioles: 1 }, '');
+    if (S.mode === 'play') openPauseMenu();
+  } else if (S.mode === 'brief' || S.mode === 'result') {
+    history.pushState({ bestioles: 1 }, '');
+    selectScreen(TIERS.indexOf(tierOf(S.level)));
+  } else if (S.mode === 'select' || S.mode === 'help' || S.mode === 'board' || S.mode === 'options') {
+    history.pushState({ bestioles: 1 }, '');
+    titleScreen();
+  }
+});
+
 function play(def) {
+  enterFullscreen();
+  guardHistory();
   closeScreens();
   startLevel(def);
   S.mode = 'play';
@@ -740,6 +792,8 @@ function play(def) {
 }
 
 function watchDemo(def) {
+  enterFullscreen();
+  guardHistory();
   closeScreens();
   startLevel(def, 'watch');
   S.mode = 'play';
@@ -875,7 +929,13 @@ function optionToggles() {
     });
     return h('div', { class: 'toggle' }, h('span', {}, label), sw);
   };
-  return h('div', { style: 'margin-top:14px;text-align:left' }, row('🎵 Musique', 'music'), row('🔊 Bruitages', 'sfx'));
+  const rows = [row('🎵 Musique', 'music'), row('🔊 Bruitages', 'sfx')];
+  if (canFullscreen()) {
+    const fs = row('⛶ Plein écran en jeu', 'full');
+    fs.querySelector('button').addEventListener('click', () => { if (S.save.opts.full) { if (S.mode === 'pause') enterFullscreen(); } else exitFullscreen(); });
+    rows.push(fs);
+  }
+  return h('div', { style: 'margin-top:14px;text-align:left' }, ...rows);
 }
 
 function optionsScreen() {
