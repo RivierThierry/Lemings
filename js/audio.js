@@ -8,7 +8,7 @@ const prefs = { sfx: true, music: true };
 export function setPrefs(p) {
   Object.assign(prefs, p);
   if (sfxGain) sfxGain.gain.value = prefs.sfx ? 0.55 : 0;
-  if (musicGain) musicGain.gain.value = prefs.music ? 0.32 : 0;
+  if (musicGain) musicGain.gain.value = prefs.music ? 0.24 : 0;
 }
 
 export function unlock() {
@@ -66,6 +66,9 @@ function noise(dur, vol, freq = 2000, q = 1, when = 0, type = 'lowpass', f1 = nu
 
 const last = {};
 // intervalle minimal entre deux mêmes sons (sinon cacophonie avec beaucoup de bestioles ou en accéléré)
+// renfort des petits bruitages des bestioles (sinon couverts par la musique, surtout sur téléphone)
+const BOOST = { yippee: 2.2, ohno: 1.6, umbrella: 1.8, bombtick: 2.6, hup: 2.6, climb: 3, land: 2.4, whee: 2.6, shovel: 2.3, punch: 1.9, pick: 2.5, shrug: 2.4, pop: 2.2, halt: 2.2, brick: 2.2, brickLow: 2, ting: 1.6 };
+let tic = false;
 const GAP = { shovel: 110, punch: 120, pick: 140, land: 70, whee: 90, tick: 60, brick: 60, brickLow: 60, pop: 70, climb: 120, hup: 100 };
 // opt : { pan: -1…1, vol: 0…1 } pour placer le son dans l'espace
 export function sfx(name, opt) {
@@ -73,9 +76,11 @@ export function sfx(name, opt) {
   const now = performance.now();
   if (last[name] && now - last[name] < (GAP[name] || 40)) return;
   last[name] = now;
-  if (opt && (opt.pan || (opt.vol !== undefined && opt.vol !== 1))) {
+  const boost = BOOST[name] || 1;
+  if (boost !== 1 || (opt && (opt.pan || (opt.vol !== undefined && opt.vol !== 1)))) {
+    opt = opt || {};
     const g = ac.createGain();
-    g.gain.value = opt.vol ?? 1;
+    g.gain.value = (opt.vol ?? 1) * boost;
     let node = g;
     if (ac.createStereoPanner && opt.pan) {
       const pn = ac.createStereoPanner();
@@ -130,7 +135,12 @@ function play(name) {
     // bloqueuse : coup de sifflet
     case 'halt': tone('square', 1500, 1500, 0.09, 0.08); tone('square', 1500, 1500, 0.16, 0.08, 0.12); break;
     case 'tick': tone('square', 1400, 1400, 0.02, 0.05); break;
-    case 'bombtick': tone('square', 1800, 1800, 0.025, 0.07); break;
+    case 'bombtick': // « tic… tac… »
+      tic = !tic;
+      tone('triangle', tic ? 1600 : 1050, tic ? 1500 : 980, 0.05, 0.16);
+      tone('square', tic ? 3200 : 2100, tic ? 3200 : 2100, 0.015, 0.05);
+      noise(0.02, 0.08, 5000, 1, 0, 'highpass');
+      break;
   }
 }
 

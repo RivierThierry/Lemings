@@ -298,7 +298,7 @@ function spot(x) {
   const c = S.cam, half = c.w / 2;
   const d = (x - (c.x + half)) / half; // -1 bord gauche, 1 bord droit
   const off = Math.max(0, Math.abs(d) - 1); // hors de l'écran
-  return { pan: Math.max(-1, Math.min(1, d)) * 0.6, vol: Math.max(0.18, 1 - off * 0.8) };
+  return { pan: Math.max(-1, Math.min(1, d)) * 0.4, vol: Math.max(0.25, 1 - off * 0.7) };
 }
 function handleEvents() {
   const g = S.game, P = S.parts, th = THEMES[S.level.theme] || THEMES.prairie;
@@ -973,4 +973,4 @@ async function boot() {
 boot();
 
 // accès pour les tests automatiques
-window.__B = { S, LEVELS, watchDemo, play, zoomAt, centerOn };
+window.__B = { S, LEVELS, watchDemo, play, zoomAt, centerOn, audio };
