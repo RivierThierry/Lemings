@@ -2,6 +2,7 @@
 // Les musiques sont des airs du domaine public arrangés en chiptune.
 
 let ac = null, master = null, sfxGain = null, musicGain = null, noiseBuf = null;
+let dest = null; // sortie du bruitage en cours (volume et stéréo selon la position)
 const prefs = { sfx: true, music: true };
 
 export function setPrefs(p) {
@@ -39,7 +40,7 @@ function env(g, t, a, peak, dec, sus = 0, rel = 0.05) {
   if (sus) g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec + rel);
 }
 
-function tone(type, f0, f1, dur, vol = 0.3, when = 0, out = sfxGain) {
+function tone(type, f0, f1, dur, vol = 0.3, when = 0, out = dest || sfxGain) {
   if (!ac) return;
   const t = ac.currentTime + when;
   const o = ac.createOscillator(), g = ac.createGain();
@@ -51,7 +52,7 @@ function tone(type, f0, f1, dur, vol = 0.3, when = 0, out = sfxGain) {
   o.start(t); o.stop(t + dur + 0.05);
 }
 
-function noise(dur, vol, freq = 2000, q = 1, when = 0, type = 'lowpass', f1 = null, out = sfxGain) {
+function noise(dur, vol, freq = 2000, q = 1, when = 0, type = 'lowpass', f1 = null, out = dest || sfxGain) {
   if (!ac) return;
   const t = ac.currentTime + when;
   const s = ac.createBufferSource(); s.buffer = noiseBuf;
@@ -64,19 +65,37 @@ function noise(dur, vol, freq = 2000, q = 1, when = 0, type = 'lowpass', f1 = nu
 }
 
 const last = {};
-export function sfx(name) {
+// intervalle minimal entre deux mêmes sons (sinon cacophonie avec beaucoup de bestioles ou en accéléré)
+const GAP = { shovel: 110, punch: 120, pick: 140, land: 70, whee: 90, tick: 60, brick: 60, brickLow: 60, pop: 70, climb: 120, hup: 100 };
+// opt : { pan: -1…1, vol: 0…1 } pour placer le son dans l'espace
+export function sfx(name, opt) {
   if (!ac || !prefs.sfx) return;
-  // pas plus d'un même son toutes les 40 ms (sinon cacophonie en accéléré)
   const now = performance.now();
-  if (last[name] && now - last[name] < 40) return;
+  if (last[name] && now - last[name] < (GAP[name] || 40)) return;
   last[name] = now;
+  if (opt && (opt.pan || (opt.vol !== undefined && opt.vol !== 1))) {
+    const g = ac.createGain();
+    g.gain.value = opt.vol ?? 1;
+    let node = g;
+    if (ac.createStereoPanner && opt.pan) {
+      const pn = ac.createStereoPanner();
+      pn.pan.value = Math.max(-1, Math.min(1, opt.pan));
+      g.connect(pn); pn.connect(sfxGain);
+    } else g.connect(sfxGain);
+    dest = node;
+    setTimeout(() => { try { g.disconnect(); } catch (e) { /* déjà fait */ } }, 3000);
+  }
+  try { play(name); } finally { dest = null; }
+}
+
+function play(name) {
   switch (name) {
     case 'open': [0, 4, 7, 12].forEach((s, i) => tone('square', 392 * 2 ** (s / 12), 392 * 2 ** (s / 12), 0.12, 0.12, i * 0.08)); noise(0.3, 0.1, 800, 1, 0, 'bandpass'); break;
     case 'assign': tone('triangle', 660, 990, 0.08, 0.25); tone('square', 1320, 1320, 0.04, 0.05, 0.03); break;
     case 'select': tone('triangle', 520, 700, 0.05, 0.15); break;
     case 'click': tone('square', 900, 900, 0.03, 0.06); break;
     case 'yippee': tone('square', 880, 1760, 0.08, 0.1); tone('square', 1175, 2350, 0.1, 0.1, 0.07); tone('triangle', 1760, 2637, 0.12, 0.12, 0.14); break;
-    case 'splat': tone('sine', 220, 50, 0.25, 0.4); noise(0.15, 0.25, 900, 1); break;
+    case 'splat': tone('sine', 240, 45, 0.3, 0.5); noise(0.22, 0.35, 1100, 0.8, 0, 'lowpass', 200); tone('sine', 600, 200, 0.12, 0.12, 0.04); break;
     case 'drown': for (let i = 0; i < 4; i++) tone('sine', 300 + Math.random() * 300, 700 + Math.random() * 400, 0.06, 0.15, i * 0.07); break;
     case 'burn': noise(0.5, 0.25, 3000, 0.7, 0, 'highpass'); tone('sawtooth', 300, 80, 0.4, 0.08); break;
     case 'crush': tone('square', 160, 60, 0.12, 0.3); noise(0.1, 0.3, 1500); tone('square', 200, 90, 0.08, 0.2, 0.12); break;
@@ -91,7 +110,27 @@ export function sfx(name) {
     case 'win': [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => tone('square', 523 * 2 ** (s / 12), 523 * 2 ** (s / 12), i === 6 ? 0.5 : 0.14, 0.13, i * 0.12)); break;
     case 'lose': [0, -1, -2, -4].forEach((s, i) => tone('sawtooth', 330 * 2 ** (s / 12), 330 * 2 ** ((s - (i === 3 ? 2 : 0)) / 12), i === 3 ? 0.7 : 0.28, 0.1, i * 0.3)); break;
     case 'dig': noise(0.06, 0.08, 700, 1); break;
+    // creuseuse : coup de pelle qui racle la terre
+    case 'shovel': noise(0.09, 0.22, 500, 0.9, 0, 'bandpass', 220); noise(0.05, 0.1, 2400, 1.5, 0.05, 'bandpass', 1200); tone('sine', 140, 90, 0.07, 0.15); break;
+    // cogneuse : coup de poing sourd et terre qui s'effrite
+    case 'punch': tone('sine', 190, 60, 0.1, 0.32); noise(0.12, 0.2, 900, 0.8, 0.02, 'lowpass', 300); break;
+    // mineuse : tintement de pioche puis éboulis
+    case 'pick': tone('triangle', 1900, 1700, 0.06, 0.13); tone('square', 3200, 3000, 0.03, 0.04); noise(0.14, 0.16, 1300, 0.7, 0.03, 'bandpass', 400); break;
+    // chute : « youhouuu » qui descend
+    case 'whee': { const f = 950 + Math.random() * 250; tone('triangle', f, f * 0.42, 0.75, 0.13); tone('sine', f * 2, f * 0.84, 0.75, 0.04); break; }
+    // atterrissage en douceur
+    case 'land': tone('sine', 260, 110, 0.07, 0.18); noise(0.05, 0.09, 600, 1); break;
+    // apparition à la trappe
+    case 'pop': tone('sine', 420, 820, 0.07, 0.14); break;
+    // la grimpeuse s'accroche, puis se hisse
+    case 'climb': tone('triangle', 520, 780, 0.06, 0.1); noise(0.05, 0.06, 3000, 2, 0.02, 'bandpass'); break;
+    case 'hup': tone('triangle', 600, 1000, 0.09, 0.14); tone('triangle', 900, 1300, 0.07, 0.1, 0.08); break;
+    // plus de briques : « hein ? »
+    case 'shrug': tone('triangle', 520, 680, 0.1, 0.13); tone('triangle', 680, 460, 0.14, 0.13, 0.11); break;
+    // bloqueuse : coup de sifflet
+    case 'halt': tone('square', 1500, 1500, 0.09, 0.08); tone('square', 1500, 1500, 0.16, 0.08, 0.12); break;
     case 'tick': tone('square', 1400, 1400, 0.02, 0.05); break;
+    case 'bombtick': tone('square', 1800, 1800, 0.025, 0.07); break;
   }
 }
 

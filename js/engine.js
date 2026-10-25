@@ -255,6 +255,7 @@ class Lem {
     this.bomb = -1;         // ticks avant explosion, -1 = pas de bombe
     this.fall = 0;
     this.bricks = 0;
+    this.hatch = true;      // première chute, depuis la trappe
   }
 }
 
@@ -428,18 +429,18 @@ export class Game {
   kill(l, state) {
     this.setState(l, state);
     const sounds = { splatting: 'splat', drowning: 'drown', burning: 'burn', crushed: 'crush' };
-    if (sounds[state]) this.emit('sound', { name: sounds[state] });
+    if (sounds[state]) this.emit('sound', { name: sounds[state], x: l.x });
     this.emit(state, { x: l.x, y: l.y });
   }
 
   checkSurroundings(l) {
     const T = this.terrain;
-    if (l.y > T.h + 24) { this.setState(l, 'dead'); this.dead++; this.emit('sound', { name: 'fallout' }); return true; }
+    if (l.y > T.h + 24) { this.setState(l, 'dead'); this.dead++; this.emit('sound', { name: 'fallout', x: l.x }); return true; }
     for (const e of this.exits) {
       if (Math.abs(l.x - e.x) <= 3 && l.y >= e.y - 10 && l.y <= e.y + 1 && l.state !== 'blocking') {
         this.setState(l, 'exiting');
         l.x = e.x;
-        this.emit('sound', { name: 'yippee' });
+        this.emit('sound', { name: 'yippee', x: l.x });
         return true;
       }
     }
@@ -468,7 +469,7 @@ export class Game {
     this.setState(l, 'dead');
     this.dead++;
     this.emit('explode', { x: l.x, y: l.y - 6 });
-    this.emit('sound', { name: 'boom' });
+    this.emit('sound', { name: 'boom', x: l.x });
   }
 
   // Descend d'au plus STEP_DOWN si le sol est proche ; sinon commence à tomber. Renvoie false si chute.
@@ -490,10 +491,11 @@ export class Game {
     // compte à rebours de la bombe
     if (l.bomb > 0 && !DYING.has(l.state)) {
       l.bomb--;
+      if (l.bomb % TPS === 0 && l.bomb > 0 && !this.nuking) this.emit('sound', { name: 'bombtick', x: l.x });
       if (l.bomb === 0) {
         if (l.state === 'falling' || l.state === 'floating' || l.state === 'climbing' || l.state === 'hoisting') { this.explode(l); return; }
         this.setState(l, 'ohno');
-        this.emit('sound', { name: 'ohno' });
+        this.emit('sound', { name: 'ohno', x: l.x });
       }
     }
 
@@ -504,20 +506,25 @@ export class Game {
         for (let i = 0; i < FALL_SPEED; i++) {
           if (T.solid(l.x, l.y + 1)) {
             if (l.fall > SPLAT_DIST) this.kill(l, 'splatting');
-            else this.setState(l, 'walking');
+            else {
+              if (l.fall > 24 && !l.hatch) this.emit('sound', { name: 'land', x: l.x });
+              l.hatch = false;
+              this.setState(l, 'walking');
+            }
             return;
           }
           l.y++;
           l.fall++;
+          if (l.fall === 40 && !l.floater && !l.hatch) this.emit('sound', { name: 'whee', x: l.x });
         }
-        if (l.floater && l.fall > FLOAT_OPEN) { this.setState(l, 'floating'); this.emit('sound', { name: 'umbrella' }); }
+        if (l.floater && l.fall > FLOAT_OPEN) { this.setState(l, 'floating'); this.emit('sound', { name: 'umbrella', x: l.x }); }
         break;
       }
       case 'floating': {
         l.frame++;
         const n = l.frame % 2 ? 1 : 2;
         for (let i = 0; i < n; i++) {
-          if (T.solid(l.x, l.y + 1)) { this.setState(l, 'walking'); return; }
+          if (T.solid(l.x, l.y + 1)) { this.emit('sound', { name: 'land', x: l.x }); this.setState(l, 'walking'); return; }
           l.y++;
         }
         break;
@@ -545,6 +552,7 @@ export class Game {
       case 'hoisting':
         l.frame++;
         if (l.frame >= 8) {
+          this.emit('sound', { name: 'hup', x: l.x });
           if (!T.solid(l.x + l.dir, l.y)) l.x += l.dir;
           this.setState(l, 'walking');
         }
@@ -583,7 +591,7 @@ export class Game {
       let k = 1;
       while (k <= STEP_UP && T.solid(nx, l.y - k)) k++;
       if (k <= STEP_UP) { l.x = nx; l.y -= k; return; }
-      if (l.climber && nx >= 0 && nx < T.w) { this.setState(l, 'climbing'); return; }
+      if (l.climber && nx >= 0 && nx < T.w) { this.setState(l, 'climbing'); this.emit('sound', { name: 'climb', x: l.x }); return; }
       l.dir = -l.dir;
       return;
     }
@@ -602,7 +610,7 @@ export class Game {
       const xb = xa + BRICK_W - 1;
       T.fillRect(xa, l.y - 1, xb, l.y);
       this.emit('brick', { x0: xa, y0: l.y - 1, x1: xb, y1: l.y, dir: l.dir });
-      this.emit('sound', { name: l.bricks <= 3 ? 'brickLow' : 'brick' });
+      this.emit('sound', { name: l.bricks <= 3 ? 'brickLow' : 'brick', x: l.x });
     } else if (c === 15) {
       l.bricks--;
       // monter sur la brique puis avancer
@@ -617,7 +625,7 @@ export class Game {
         }
         l.x = nx;
       }
-      if (l.bricks <= 0) this.setState(l, 'shrugging');
+      if (l.bricks <= 0) { this.setState(l, 'shrugging'); this.emit('sound', { name: 'shrug', x: l.x }); }
     }
   }
 
@@ -631,7 +639,7 @@ export class Game {
     // acier ou sens interdit juste devant
     if (T.blockedIn(l.x + d * 6, l.y - 8, 7, 9.5, clipFwd(1, 7), d)) {
       this.setState(l, 'walking');
-      this.emit('sound', { name: 'ting' });
+      this.emit('sound', { name: 'ting', x: l.x });
       return;
     }
     // plus rien à creuser devant
@@ -643,7 +651,7 @@ export class Game {
     let n = T.erase(l.x + d * 6, l.y - 8, 7, 9.5, clipFwd(1, 13));
     const near = clipFwd(1, 4);
     n += T.eraseRect(near.x0, l.y - 12, near.x1, l.y);
-    if (n) this.emit('dig', { x: l.x + d * 6, y: l.y - 6, dir: d });
+    if (n) this.emit('dig', { x: l.x + d * 6, y: l.y - 6, dir: d, kind: 'basher' });
     if (this.blocked(l, l.x + d)) { l.dir = -d; this.setState(l, 'walking'); return; }
     if (!T.solid(l.x + d, l.y)) l.x += d;
     else if (l.frame > 4) { this.setState(l, 'walking'); return; }
@@ -660,11 +668,11 @@ export class Game {
     if (T.blockedIn(nx + d * 3, ny - 7, 7, 9.5, clip, d) || this.blocked(l, nx)) {
       if (this.blocked(l, nx)) l.dir = -d;
       this.setState(l, 'walking');
-      this.emit('sound', { name: 'ting' });
+      this.emit('sound', { name: 'ting', x: l.x });
       return;
     }
     const n = T.erase(nx + d * 3, ny - 7, 7, 9.5, clip);
-    if (n) this.emit('dig', { x: nx + d * 4, y: ny - 3, dir: d });
+    if (n) this.emit('dig', { x: nx + d * 4, y: ny - 3, dir: d, kind: 'miner' });
     l.x = nx;
     l.y = ny;
     this.followGround(l);
@@ -680,12 +688,12 @@ export class Game {
     const x0 = l.x - 4, x1 = l.x + 4;
     if (T.anyIn(x0, l.y + 1, x1, l.y + 2, (v) => v === STEEL)) {
       this.setState(l, 'walking');
-      this.emit('sound', { name: 'ting' });
+      this.emit('sound', { name: 'ting', x: l.x });
       return;
     }
     if (!T.anyIn(x0, l.y + 1, x1, l.y + 2, (v) => v !== EMPTY)) { this.setState(l, 'falling'); l.fall = 0; return; }
     T.eraseRect(x0, l.y - 1, x1, l.y + 2);
-    this.emit('dig', { x: l.x, y: l.y + 2, dir: 0 });
+    this.emit('dig', { x: l.x, y: l.y + 2, dir: 0, kind: 'digger' });
     l.y += 2;
     if (!T.solid(l.x, l.y + 1) && !T.anyIn(x0, l.y + 1, x1, l.y + 3, (v) => v !== EMPTY)) { this.setState(l, 'falling'); l.fall = 0; }
   }

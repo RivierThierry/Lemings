@@ -292,17 +292,25 @@ function updateHoverInfo() {
 }
 
 // ---------- événements du moteur ----------
+// Volume et stéréo d'un bruitage selon la position de la bestiole par rapport à l'écran
+function spot(x) {
+  if (x === undefined || !S.game) return undefined;
+  const c = S.cam, half = c.w / 2;
+  const d = (x - (c.x + half)) / half; // -1 bord gauche, 1 bord droit
+  const off = Math.max(0, Math.abs(d) - 1); // hors de l'écran
+  return { pan: Math.max(-1, Math.min(1, d)) * 0.6, vol: Math.max(0.18, 1 - off * 0.8) };
+}
 function handleEvents() {
   const g = S.game, P = S.parts, th = THEMES[S.level.theme] || THEMES.prairie;
   const quiet = S.demoKind === 'attract';
   for (const e of g.events) {
     switch (e.type) {
-      case 'sound': if (!quiet) audio.sfx(e.name); break;
-      case 'assign': if (!quiet) audio.sfx('assign'); break;
+      case 'sound': if (!quiet) audio.sfx(e.name, spot(e.x)); break;
+      case 'assign': if (!quiet && e.skill === 'blocker') audio.sfx('halt'); break;
       case 'brick': S.view.drawBrick(e); break;
       case 'dig':
         P.burst(e.x, e.y, 3, { color: th.dirt, speed: 50, g: 260, life: 0.5, size: 1.6, angle: e.dir ? (e.dir > 0 ? -2.4 : -0.7) : -Math.PI / 2, spread: 1.6 });
-        if (!quiet && Math.random() < 0.3) audio.sfx('dig');
+        if (!quiet) audio.sfx({ digger: 'shovel', basher: 'punch', miner: 'pick' }[e.kind] || 'dig', spot(e.x));
         break;
       case 'explode':
         P.burst(e.x, e.y, 26, { color: [LEM_COLORS.body, LEM_COLORS.hair, '#ffd23f', '#ff5d8f', '#fff'], type: 'confetti', speed: 120, g: 180, life: 1.3, size: 2.2 });
@@ -327,6 +335,7 @@ function handleEvents() {
         P.add({ x: e.x, y: e.y - 30, vx: 0, vy: -18, g: 0, life: 0, max: 1, size: 10, color: '#7dff8a', type: 'text', text: '+1', rot: 0, vr: 0 });
         break;
       case 'spawn':
+        if (!quiet) audio.sfx('pop', spot(e.x));
         P.burst(e.x, e.y - 2, 5, { color: 'rgba(255,255,255,0.7)', type: 'smoke', speed: 18, g: 0, life: 0.5, size: 2 });
         break;
       case 'end': S.endTimer = 1.6; break;
