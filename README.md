@@ -32,5 +32,7 @@ node tools/check.mjs             # vérifie que chaque niveau est faisable (et p
 node tools/view.mjs t2-04        # carte ASCII d'un niveau
 ```
 
-Police Fredoka (SIL Open Font License). *Lemmings* est une marque de ses ayants droit ; ce jeu est une création
+Police Fredoka (SIL Open Font License). Voix des bestioles : synthèse Piper (rhasspy) avec la voix française « siwis »,
+issue de la SIWIS French Speech Synthesis Database (CC BY 4.0, https://datashare.is.ed.ac.uk/handle/10283/2353),
+rendue plus aiguë. *Lemmings* est une marque de ses ayants droit ; ce jeu est une création
 originale qui s'en inspire.

@@ -927,6 +927,7 @@ function helpScreen() {
       '📱 Touche une bestiole pour lui donner le talent, glisse pour te déplacer, pince pour zoomer.', h('br'),
       h('kbd', {}, '1'), '…', h('kbd', {}, '8'), ' talents · ', h('kbd', {}, 'P'), ' pause · ', h('kbd', {}, 'F'), ' accélérer · ', h('kbd', {}, '+'), h('kbd', {}, '−'), ' débit · ', h('kbd', {}, 'N'), h('kbd', {}, 'N'), ' tout exploser · flèches pour défiler'),
     h('p', { class: 'keys' }, 'Une chute trop haute est fatale, l\'eau et la lave aussi. L\'acier ne se creuse pas, et les murs fléchés ne se creusent que dans le sens des flèches. En pause, tu peux quand même donner des talents !'),
+    h('p', { class: 'keys', style: 'font-size:12px;opacity:.7' }, 'Voix des bestioles : synthèse Piper, voix « siwis » (SIWIS French Speech Synthesis Database, CC BY 4.0). Police Fredoka (OFL).'),
     h('div', { class: 'btns' }, h('button', { class: 'btn go', onclick: () => { audio.sfx('click'); titleScreen(); } }, 'Compris !'))));
 }
 
