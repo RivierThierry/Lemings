@@ -9,7 +9,7 @@ TMP=$(mktemp -d)
 while IFS='|' read -r n txt ls; do
   echo "$txt" | piper -m "$MODEL" -f "$TMP/$n.wav" --length-scale "$ls" 2>/dev/null
   # plus aigu et plus vif (voix de dessin animé), sans blancs, volume homogène
-  ffmpeg -nostdin -v error -y -i "$TMP/$n.wav" -af "silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse,apad=pad_dur=0.04,asetrate=22050*1.3,aresample=44100,atempo=0.88,highpass=f=180,equalizer=f=3000:t=q:w=1:g=3,loudnorm=I=-14:TP=-1.5:LRA=7" -ac 1 -ar 44100 -c:a libmp3lame -b:a 64k "$OUT/$n.mp3"
+  ffmpeg -nostdin -v error -y -i "$TMP/$n.wav" -af "silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse,apad=pad_dur=0.04,asetrate=22050*1.75,aresample=44100,atempo=0.8,highpass=f=180,equalizer=f=3000:t=q:w=1:g=3,loudnorm=I=-14:TP=-1.5:LRA=7" -ac 1 -ar 44100 -c:a libmp3lame -b:a 64k "$OUT/$n.mp3"
 done <<'LIST'
 partir|C'est parti !|0.9
 onyva|On y va !|0.9
