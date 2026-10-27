@@ -516,6 +516,7 @@ export class Game {
           l.y++;
           l.fall++;
           if (l.fall === 40 && !l.floater && !l.hatch) this.emit('sound', { name: 'whee', x: l.x });
+          if (l.fall === SPLAT_DIST + 1 && !l.floater) this.emit('sound', { name: 'scream', x: l.x }); // trop haut !
         }
         if (l.floater && l.fall > FLOAT_OPEN) { this.setState(l, 'floating'); this.emit('sound', { name: 'umbrella', x: l.x }); }
         break;

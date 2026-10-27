@@ -35,12 +35,14 @@ export function unlock() {
 }
 
 // ---------- Voix des bestioles (répliques enregistrées, rendues aiguës façon dessin animé) ----------
-const VOICES = ['partir', 'onyva', 'youpi', 'hourra', 'ohnon', 'aaah', 'hop', 'hein', 'stop', 'ouille', 'aie', 'glouglou', 'wouah', 'sauve'];
+// répliques (plusieurs prises de chacune) : les bestioles ne parlent que pour les moments importants
+const VOICES = { partir: 2, youpi: 3, hourra: 1, ohnon: 3, aaah: 3 };
 const voiceBuf = {};
 let voicesPlaying = 0;
 let curOpt = null; // position du bruitage en cours
 function loadVoices() {
-  for (const n of VOICES) {
+  for (const [base, count] of Object.entries(VOICES)) for (let i = 1; i <= count; i++) {
+    const n = base + i;
     fetch('sons/' + n + '.mp3')
       .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
       .then((buf) => new Promise((res, rej) => ac.decodeAudioData(buf, res, rej)))
@@ -49,14 +51,15 @@ function loadVoices() {
   }
 }
 // Joue une réplique ; renvoie false si elle n'est pas (encore) chargée
-function say(n, { rate = 1, vol = 1, when = 0 } = {}) {
-  const b = voiceBuf[n];
+function say(base, { rate = 1, vol = 1, when = 0 } = {}) {
+  const takes = Object.keys(voiceBuf).filter((k) => k.replace(/\d+$/, '') === base);
+  const b = takes.length ? voiceBuf[takes[Math.floor(Math.random() * takes.length)]] : null;
   if (!b) return false;
   if (voicesPlaying >= 4) return true; // pas de brouhaha : 4 voix à la fois au plus
   const t = ac.currentTime + when;
   const src = ac.createBufferSource();
   src.buffer = b;
-  src.playbackRate.value = rate * (0.94 + Math.random() * 0.2);
+  src.playbackRate.value = rate * (0.95 + Math.random() * 0.15);
   const g = ac.createGain();
   g.gain.value = 1.15 * vol * (curOpt && curOpt.vol !== undefined ? curOpt.vol : 1);
   src.connect(g);
@@ -70,7 +73,6 @@ function say(n, { rate = 1, vol = 1, when = 0 } = {}) {
   src.start(t);
   return true;
 }
-const pick = (...names) => names[Math.floor(Math.random() * names.length)];
 
 function env(g, t, a, peak, dec, sus = 0, rel = 0.05) {
   g.gain.setValueAtTime(0.0001, t);
@@ -108,7 +110,7 @@ const last = {};
 // renfort des petits bruitages des bestioles (sinon couverts par la musique, surtout sur téléphone)
 const BOOST = { yippee: 2.2, ohno: 1.6, umbrella: 1.8, bombtick: 2.6, hup: 2.6, climb: 3, land: 2.4, whee: 2.6, shovel: 2.3, punch: 1.9, pick: 2.5, shrug: 2.4, pop: 2.2, halt: 2.2, brick: 2.2, brickLow: 2, ting: 1.6 };
 let tic = false;
-const GAP = { shovel: 110, punch: 120, pick: 140, land: 70, whee: 90, tick: 60, brick: 60, brickLow: 60, pop: 70, climb: 120, hup: 100 };
+const GAP = { scream: 250, yippee: 90, shovel: 110, punch: 120, pick: 140, land: 70, whee: 90, tick: 60, brick: 60, brickLow: 60, pop: 70, climb: 120, hup: 100 };
 // opt : { pan: -1…1, vol: 0…1 } pour placer le son dans l'espace
 export function sfx(name, opt) {
   if (!ac || !prefs.sfx) return;
@@ -135,22 +137,22 @@ export function sfx(name, opt) {
 
 function play(name) {
   switch (name) {
-    case 'open': [0, 4, 7, 12].forEach((s, i) => tone('square', 392 * 2 ** (s / 12), 392 * 2 ** (s / 12), 0.12, 0.12, i * 0.08)); noise(0.3, 0.1, 800, 1, 0, 'bandpass'); say(pick('partir', 'partir', 'onyva'), { when: 0.35 }); break;
+    case 'open': [0, 4, 7, 12].forEach((s, i) => tone('square', 392 * 2 ** (s / 12), 392 * 2 ** (s / 12), 0.12, 0.12, i * 0.08)); noise(0.3, 0.1, 800, 1, 0, 'bandpass'); say('partir', { when: 0.35 }); break;
     case 'assign': tone('triangle', 660, 990, 0.08, 0.25); tone('square', 1320, 1320, 0.04, 0.05, 0.03); break;
     case 'select': tone('triangle', 520, 700, 0.05, 0.15); break;
     case 'click': tone('square', 900, 900, 0.03, 0.06); break;
     case 'yippee': if (!say(Math.random() < 0.8 ? 'youpi' : 'hourra')) { tone('square', 880, 1760, 0.08, 0.1); tone('square', 1175, 2350, 0.1, 0.1, 0.07); tone('triangle', 1760, 2637, 0.12, 0.12, 0.14); } else tone('triangle', 1760, 2637, 0.12, 0.04, 0.05); break;
-    case 'splat': say('ouille', { rate: 1.05 }); tone('sine', 240, 45, 0.3, 0.5); noise(0.22, 0.35, 1100, 0.8, 0, 'lowpass', 200); tone('sine', 600, 200, 0.12, 0.12, 0.04); break;
-    case 'drown': say('glouglou'); for (let i = 0; i < 4; i++) tone('sine', 300 + Math.random() * 300, 700 + Math.random() * 400, 0.06, 0.15, i * 0.07); break;
-    case 'burn': say('aie', { rate: 1.1 }); noise(0.5, 0.25, 3000, 0.7, 0, 'highpass'); tone('sawtooth', 300, 80, 0.4, 0.08); break;
-    case 'crush': say('aie', { rate: 0.95 }); tone('square', 160, 60, 0.12, 0.3); noise(0.1, 0.3, 1500); tone('square', 200, 90, 0.08, 0.2, 0.12); break;
+    case 'splat': tone('sine', 240, 45, 0.3, 0.5); noise(0.22, 0.35, 1100, 0.8, 0, 'lowpass', 200); tone('sine', 600, 200, 0.12, 0.12, 0.04); break;
+    case 'drown': for (let i = 0; i < 4; i++) tone('sine', 300 + Math.random() * 300, 700 + Math.random() * 400, 0.06, 0.15, i * 0.07); break;
+    case 'burn': noise(0.5, 0.25, 3000, 0.7, 0, 'highpass'); tone('sawtooth', 300, 80, 0.4, 0.08); break;
+    case 'crush': tone('square', 160, 60, 0.12, 0.3); noise(0.1, 0.3, 1500); tone('square', 200, 90, 0.08, 0.2, 0.12); break;
     case 'boom': noise(0.7, 0.7, 1200, 0.8, 0, 'lowpass', 60); tone('sine', 120, 30, 0.5, 0.6); break;
     case 'ohno': if (!say('ohnon')) { tone('triangle', 900, 500, 0.18, 0.2); tone('triangle', 700, 300, 0.25, 0.2, 0.18); } break;
     case 'ting': tone('triangle', 2400, 2300, 0.25, 0.15); tone('sine', 3600, 3500, 0.2, 0.06); break;
     case 'brick': tone('square', 1100, 1100, 0.025, 0.05); break;
     case 'brickLow': tone('square', 1600, 1600, 0.04, 0.09); break;
-    case 'umbrella': noise(0.18, 0.15, 2500, 2, 0, 'bandpass', 600); tone('triangle', 500, 900, 0.1, 0.1, 0.1); if (Math.random() < 0.5) say('wouah', { when: 0.08 }); break;
-    case 'nuke': for (let i = 0; i < 3; i++) tone('sawtooth', 300, 900, 0.3, 0.12, i * 0.32); say('sauve', { when: 0.2, vol: 1.2 }); break;
+    case 'umbrella': noise(0.18, 0.15, 2500, 2, 0, 'bandpass', 600); tone('triangle', 500, 900, 0.1, 0.1, 0.1); break;
+    case 'nuke': for (let i = 0; i < 3; i++) tone('sawtooth', 300, 900, 0.3, 0.12, i * 0.32); break;
     case 'fallout': tone('sine', 1200, 200, 0.5, 0.1); break;
     case 'win': [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => tone('square', 523 * 2 ** (s / 12), 523 * 2 ** (s / 12), i === 6 ? 0.5 : 0.14, 0.13, i * 0.12)); break;
     case 'lose': [0, -1, -2, -4].forEach((s, i) => tone('sawtooth', 330 * 2 ** (s / 12), 330 * 2 ** ((s - (i === 3 ? 2 : 0)) / 12), i === 3 ? 0.7 : 0.28, 0.1, i * 0.3)); break;
@@ -162,18 +164,19 @@ function play(name) {
     // mineuse : tintement de pioche puis éboulis
     case 'pick': tone('triangle', 1900, 1700, 0.06, 0.13); tone('square', 3200, 3000, 0.03, 0.04); noise(0.14, 0.16, 1300, 0.7, 0.03, 'bandpass', 400); break;
     // chute : « youhouuu » qui descend
-    case 'whee': if (say('aaah')) break; { const f = 950 + Math.random() * 250; tone('triangle', f, f * 0.42, 0.75, 0.13); tone('sine', f * 2, f * 0.84, 0.75, 0.04); break; }
+    case 'scream': if (say('aaah')) break; // sinon, le sifflet de chute ci-dessous
+    case 'whee': { const f = 950 + Math.random() * 250; tone('triangle', f, f * 0.42, 0.75, 0.13); tone('sine', f * 2, f * 0.84, 0.75, 0.04); break; }
     // atterrissage en douceur
     case 'land': tone('sine', 260, 110, 0.07, 0.18); noise(0.05, 0.09, 600, 1); break;
     // apparition à la trappe
     case 'pop': tone('sine', 420, 820, 0.07, 0.14); break;
     // la grimpeuse s'accroche, puis se hisse
     case 'climb': tone('triangle', 520, 780, 0.06, 0.1); noise(0.05, 0.06, 3000, 2, 0.02, 'bandpass'); break;
-    case 'hup': if (say('hop', { rate: 1.05 })) break; tone('triangle', 600, 1000, 0.09, 0.14); tone('triangle', 900, 1300, 0.07, 0.1, 0.08); break;
+    case 'hup': tone('triangle', 600, 1000, 0.09, 0.14); tone('triangle', 900, 1300, 0.07, 0.1, 0.08); break;
     // plus de briques : « hein ? »
-    case 'shrug': if (say('hein')) break; tone('triangle', 520, 680, 0.1, 0.13); tone('triangle', 680, 460, 0.14, 0.13, 0.11); break;
+    case 'shrug': tone('triangle', 520, 680, 0.1, 0.13); tone('triangle', 680, 460, 0.14, 0.13, 0.11); break;
     // bloqueuse : coup de sifflet
-    case 'halt': say('stop'); tone('square', 1500, 1500, 0.09, 0.08); tone('square', 1500, 1500, 0.16, 0.08, 0.12); break;
+    case 'halt': tone('square', 1500, 1500, 0.09, 0.08); tone('square', 1500, 1500, 0.16, 0.08, 0.12); break;
     case 'tick': tone('square', 1400, 1400, 0.02, 0.05); break;
     case 'bombtick': // « tic… tac… »
       tic = !tic;
